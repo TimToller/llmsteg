@@ -1,4 +1,6 @@
-flask
 torch==2.3.1
 transformers>=4.44.1
 numpy
+fastapi
+uvicorn
+huggingface_hub

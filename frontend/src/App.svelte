@@ -1,100 +1,180 @@
 <script lang="ts">
-	let encryptPrompt = "";
+	import { prompts } from "./lib/prompts.json";
+
+	let encodePrompt = "";
 	let hiddenMessage = "";
-	let encryptedResponse = "";
+	let encodedResponse = "";
+	let encodeLoading = false;
 
-	let decryptPrompt = "";
+	let decodePrompt = "";
 	let coverMessage = "";
-	let decryptedResponse = "";
+	let decodedResponse = "";
+	let decodeLoading = false;
 
-	// Check if the encryption form fields are filled
-	$: isEncryptFormValid = () => encryptPrompt && hiddenMessage;
+	$: isEncodeFormValid = () => encodePrompt && hiddenMessage && !encodeLoading;
+	$: isDecodeFormValid = () => decodePrompt && coverMessage && !decodeLoading;
 
-	// Check if the decryption form fields are filled
-	$: isDecryptFormValid = () => decryptPrompt && coverMessage;
+	// Reset encode form
+	const resetEncodeForm = () => {
+		encodePrompt = "";
+		hiddenMessage = "";
+		encodedResponse = "";
+	};
 
-	const encryptMessage = async () => {
+	// Reset decode form
+	const resetDecodeForm = () => {
+		decodePrompt = "";
+		coverMessage = "";
+		decodedResponse = "";
+	};
+
+	const copyToClipboard = (text: string) => {
+		navigator.clipboard.writeText(text);
+		alert("Copied to clipboard");
+	};
+
+	const getRandomPrompt = () => {
+		const randomIndex = Math.floor(Math.random() * prompts.length);
+		return prompts[randomIndex];
+	};
+
+	const setRandomPrompt = (type: "encode" | "decode") => {
+		const randomPrompt = getRandomPrompt();
+		if (type === "encode") {
+			encodePrompt = randomPrompt;
+		} else {
+			decodePrompt = randomPrompt;
+		}
+	};
+
+	const encodeMessage = async () => {
+		encodeLoading = true;
 		const response = await fetch("/encode", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
-				prompt: encryptPrompt,
+				prompt: encodePrompt,
 				message: hiddenMessage,
 			}),
+		}).finally(() => {
+			encodeLoading = false;
 		});
 
 		const result = await response.json();
-		encryptedResponse = result.cover_text || "Error: No response from server";
+		encodedResponse = result.encoded_message || "Error: No response from server";
 	};
 
-	const decryptMessage = async () => {
+	const decodeMessage = async () => {
+		decodeLoading = true;
 		const response = await fetch("/decode", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
-				prompt: decryptPrompt,
+				prompt: decodePrompt,
 				cover_text: coverMessage,
 			}),
+		}).finally(() => {
+			decodeLoading = false;
 		});
 
 		const result = await response.json();
-		decryptedResponse = result.secret_message || "Error: No response from server";
+		decodedResponse = result.decoded_message || "Error: No response from server";
 	};
 </script>
 
 <svelte:head>
-	<title>LLm Steganography</title>
+	<title>LLM Steganography</title>
 </svelte:head>
 
 <h1>Steganography App</h1>
 
-<!-- Encryption Section -->
 <div class="form-section">
-	<h2>Encryption</h2>
-	<form on:submit|preventDefault={encryptMessage}>
-		<div>
-			<label for="encryptPrompt">Prompt:</label>
-			<textarea id="encryptPrompt" bind:value={encryptPrompt} placeholder="Enter prompt text"></textarea>
+	<h2>Encode</h2>
+	<form on:submit|preventDefault={encodeMessage}>
+		<div class="textarea-container">
+			<label for="encodePrompt">Prompt:</label>
+			<textarea id="encodePrompt" bind:value={encodePrompt} placeholder="Enter prompt text"></textarea>
+			<div class="floating-buttons">
+				<button on:click|preventDefault={() => copyToClipboard(encodePrompt)} title="Copy" class:hide={encodePrompt === ""}>
+					📋
+				</button>
+				<button on:click|preventDefault={resetEncodeForm} title="Reset" class:hide={encodePrompt === ""}>🔄</button>
+				<button on:click|preventDefault={() => setRandomPrompt("encode")} title="Random Prompt">🎲</button>
+			</div>
 		</div>
 
-		<div>
+		<div class="textarea-container">
 			<label for="hiddenMessage">Hidden Message:</label>
 			<textarea id="hiddenMessage" bind:value={hiddenMessage} placeholder="Enter hidden message"></textarea>
+			<div class="floating-buttons" class:hide={hiddenMessage === ""}>
+				<button on:click|preventDefault={() => copyToClipboard(hiddenMessage)} title="Copy">📋</button>
+				<button on:click|preventDefault={() => (hiddenMessage = "")} title="Reset">🔄</button>
+			</div>
 		</div>
 
-		<button type="submit" disabled={!isEncryptFormValid()}>Encrypt</button>
+		<button type="submit" disabled={!isEncodeFormValid()}>
+			{#if encodeLoading}
+				<div class="spinner"></div>
+			{:else}
+				Encode
+			{/if}
+		</button>
 	</form>
 
 	<div class="response">
-		<h3>Encrypted Response:</h3>
-		<p>{encryptedResponse}</p>
+		<h3>Encoded Response:</h3>
+		<p>{encodedResponse}</p>
+		<div class="floating-buttons">
+			<button on:click|preventDefault={() => copyToClipboard(encodedResponse)} title="Copy" class:hide={encodedResponse === ""}
+				>📋</button
+			>
+		</div>
 	</div>
 </div>
 
-<!-- Decryption Section -->
 <div class="form-section">
-	<h2>Decryption</h2>
-	<form on:submit|preventDefault={decryptMessage}>
-		<div>
-			<label for="decryptPrompt">Prompt:</label>
-			<textarea id="decryptPrompt" bind:value={decryptPrompt} placeholder="Enter prompt text"></textarea>
+	<h2>Decode</h2>
+	<form on:submit|preventDefault={decodeMessage}>
+		<div class="textarea-container">
+			<label for="decodePrompt">Prompt:</label>
+			<textarea id="decodePrompt" bind:value={decodePrompt} placeholder="Enter prompt text"></textarea>
+			<div class="floating-buttons">
+				<button on:click|preventDefault={() => copyToClipboard(decodePrompt)} title="Copy" class:hide={decodePrompt === ""}
+					>📋</button
+				>
+				<button on:click|preventDefault={() => (decodePrompt = "")} title="Reset" class:hide={decodePrompt === ""}>🔄</button>
+				<button on:click|preventDefault={() => setRandomPrompt("decode")} title="Random Prompt">🎲</button>
+			</div>
 		</div>
 
-		<div>
+		<div class="textarea-container">
 			<label for="coverMessage">Cover Message:</label>
 			<textarea id="coverMessage" bind:value={coverMessage} placeholder="Enter cover message"></textarea>
+			<div class="floating-buttons" class:hide={coverMessage === ""}>
+				<button on:click|preventDefault={() => copyToClipboard(coverMessage)} title="Copy">📋</button>
+				<button on:click|preventDefault={() => (coverMessage = "")} title="Reset">🔄</button>
+			</div>
 		</div>
 
-		<button type="submit" disabled={!isDecryptFormValid()}>Decrypt</button>
+		<button type="submit" disabled={!isDecodeFormValid()}>
+			{#if decodeLoading}
+				<div class="spinner"></div>
+			{:else}
+				Decode
+			{/if}
+		</button>
 	</form>
 
 	<div class="response">
-		<h3>Decrypted Response:</h3>
-		<p>{decryptedResponse}</p>
+		<h3>Decoded Response:</h3>
+		<p>{decodedResponse}</p>
+		<div class="floating-buttons" class:hide={decodedResponse === ""}>
+			<button on:click|preventDefault={() => copyToClipboard(decodedResponse)} title="Copy">📋</button>
+		</div>
 	</div>
 </div>
 
@@ -103,6 +183,7 @@
 		margin-bottom: 2rem;
 		display: flex;
 		flex-direction: column;
+		width: 100%;
 	}
 
 	label {
@@ -114,15 +195,58 @@
 		resize: vertical;
 		width: 100%;
 		min-height: 100px;
-		margin-bottom: 1.5rem;
 		padding: 0.75rem;
 		border: 1px solid #ccc;
 		border-radius: 8px;
 		font-size: 1rem;
 		line-height: 1.5;
 	}
+	.textarea-container {
+		position: relative;
+		margin-bottom: 1.5rem;
+		width: 100%;
+	}
 
-	button {
+	.floating-buttons {
+		position: absolute;
+		bottom: 10px;
+		right: -10px;
+		display: flex;
+		gap: 8px;
+		opacity: 0.5;
+		transition: opacity 0.3s ease;
+		background-color: #1a1a1a;
+		border-radius: 10px;
+		overflow: hidden;
+	}
+
+	.floating-buttons button {
+		background: none;
+		color: white;
+		border: none;
+		border-radius: 50%;
+		padding: 0.5rem;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		border-radius: 0px;
+	}
+	.floating-buttons button:hover {
+		background-color: #474747;
+	}
+
+	.textarea-container:hover .floating-buttons {
+		opacity: 1;
+	}
+
+	.hide {
+		display: none;
+	}
+
+	.textarea-container {
+		position: relative;
+	}
+
+	form > button {
 		padding: 0.75rem 1.5rem;
 		border: none;
 		background-color: #007bff;
@@ -131,14 +255,34 @@
 		border-radius: 8px;
 		cursor: pointer;
 		transition: background-color 0.3s ease;
-		align-self: flex-start;
-		opacity: 1;
+		width: 100%;
+		margin-bottom: 1rem;
 	}
 
-	button:disabled {
+	form > button:disabled {
 		background-color: #ccc;
 		cursor: not-allowed;
 		opacity: 0.7;
+	}
+
+	.spinner {
+		border: 4px solid #f3f3f3;
+		border-top: 4px solid #3498db;
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		animation: spin 1s linear infinite;
+		display: inline-block;
+		vertical-align: middle;
+	}
+
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
 	}
 
 	.response {
@@ -146,6 +290,7 @@
 		padding: 1rem;
 		border-radius: 8px;
 		border: 1px solid #ccc;
+		position: relative;
 	}
 
 	.response h3 {

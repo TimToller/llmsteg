@@ -1,20 +1,15 @@
-# backend/Dockerfile
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y git
+COPY . /app
 
-# Copy requirements and install dependencies
 COPY requirements.txt .
+
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the code
-COPY . .
+RUN python download_model.py 
 
-# Expose port 8000
 EXPOSE 8000
 
-# Run the application
-CMD ["python", "app.py"]
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]

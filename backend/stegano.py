@@ -1,74 +1,31 @@
 import torch
 import zlib
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
+from error_correction import hamming_encode, hamming_decode
 
 # Load GPT-2 tokenizer and model
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 model = GPT2LMHeadModel.from_pretrained("gpt2")
-
-# Ensure model is in evaluation mode
 model.eval()
 
 
 # Function to get next token IDs
 def get_next_token_ids(current_tokens, top_k=8):
+    if tokenizer is None or model is None:
+        raise RuntimeError("Model and tokenizer not loaded yet!")
     inputs = torch.tensor([current_tokens])
     with torch.no_grad():
         outputs = model(inputs)
-        # Get logits for the last token
         logits = outputs.logits[0, -1, :]
-        # Apply softmax to get probabilities
         probs = torch.softmax(logits, dim=-1)
-    # Get the top K token IDs
     top_probs, top_indices = torch.topk(probs, k=top_k)
     top_token_ids = top_indices.tolist()
     return top_token_ids
 
 
-# Hamming(7,4) Error Correction Code Implementation
-def hamming_encode(data_bits):
-    # Split data bits into chunks of 4 bits
-    chunks = [data_bits[i : i + 4] for i in range(0, len(data_bits), 4)]
-    encoded_bits = ""
-    for chunk in chunks:
-        while len(chunk) < 4:
-            chunk += "0"  # Pad with zeros if necessary
-        d = [int(b) for b in chunk]
-        # Calculate parity bits
-        p1 = d[0] ^ d[1] ^ d[3]
-        p2 = d[0] ^ d[2] ^ d[3]
-        p3 = d[1] ^ d[2] ^ d[3]
-        # Arrange bits in the order: p1, p2, d0, p3, d1, d2, d3
-        encoded_chunk = f"{p1}{p2}{d[0]}{p3}{d[1]}{d[2]}{d[3]}"
-        encoded_bits += encoded_chunk
-    return encoded_bits
-
-
-def hamming_decode(encoded_bits):
-    # Split encoded bits into chunks of 7 bits
-    chunks = [encoded_bits[i : i + 7] for i in range(0, len(encoded_bits), 7)]
-    data_bits = ""
-    for chunk in chunks:
-        if len(chunk) < 7:
-            continue  # Discard incomplete chunks
-        bits = [int(b) for b in chunk]
-        # Calculate syndrome bits
-        s1 = bits[0] ^ bits[2] ^ bits[4] ^ bits[6]
-        s2 = bits[1] ^ bits[2] ^ bits[5] ^ bits[6]
-        s3 = bits[3] ^ bits[4] ^ bits[5] ^ bits[6]
-        error_position = s1 * 1 + s2 * 2 + s3 * 4
-        # Correct single-bit error if detected
-        if error_position != 0:
-            error_position -= 1  # Adjust for zero-based index
-            bits[error_position] ^= 1
-        # Extract data bits: bits at positions 2,4,5,6
-        data_chunk = f"{bits[2]}{bits[4]}{bits[5]}{bits[6]}"
-        data_bits += data_chunk
-    return data_bits
-
-
 # Encoding Function
 def encode_message(message, bits_per_choice=3, prompt="Once upon a time"):
+    print(f"Encode '{message}' with prompt '{prompt}'")
     # Compress the message using zlib
     compressed_message = zlib.compress(message.encode("utf-8"))
     # Convert compressed message to bits
@@ -102,6 +59,8 @@ def encode_message(message, bits_per_choice=3, prompt="Once upon a time"):
 
 # Decoding Function
 def decode_message(encoded_text, bits_per_choice=3, prompt="Once upon a time"):
+    print(f"Decode '{encoded_text}' with prompt '{prompt}'")
+
     # Encode the encoded_text to get token IDs
     encoded_tokens = tokenizer.encode(encoded_text)
     # Get the token IDs of the prompt
