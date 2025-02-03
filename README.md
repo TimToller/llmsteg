@@ -1,5 +1,9 @@
 # llmsteg: Text-Based Steganography Using Language Models
 
+## An update
+
+After talking to one if the professers at JKU, I will probably research this topic further in form of the **Seminar in AI** course. Maybe I will even write my bachelor thesis on it, lets see. If so, I will update the README here.
+
 ## Introduction
 
 Steganography, the art of concealing messages, has long intrigued me as a niche but fascinating complement to cryptography. Unlike cryptography, which focuses on securing data through encryption, steganography seeks to hide the very existence of a message. This project explores an approach to text-based steganography by leveraging language models to encode hidden messages within naturally generated text. It's an approach I personally haven't seen so far.
@@ -19,7 +23,7 @@ The core idea is to encode a secret message within the sequence of tokens chosen
 The project comprises two main components:
 
 - **Backend**: Implements the encoding and decoding algorithms, utilizing a pre-trained language model (e.g., GPT-2).
-- **Frontend**: A user-friendly Svelte application for testing the encoding and decoding processes.
+- **Frontend**: A simple Svelte application for testing the encoding and decoding processes.
 
 ## Installation
 
