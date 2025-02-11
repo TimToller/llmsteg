@@ -8,7 +8,9 @@ After talking to one if the professers at JKU, I will probably research this top
 
 Steganography, the art of concealing messages, has long intrigued me as a niche but fascinating complement to cryptography. Unlike cryptography, which focuses on securing data through encryption, steganography seeks to hide the very existence of a message. This project explores an approach to text-based steganography by leveraging language models to encode hidden messages within naturally generated text. It's an approach I personally haven't seen so far.
 
-> If something like this exists already, please reach out, I'd be interested to hear/read more about it!
+## Other resources
+
+Looks like there are some other papers on this: https://youtu.be/55LXhbPjyeM?si=-kn1_VQe_fdln1xZ
 
 While still a simple and experimental proof of concept, this method demonstrates the potential to obscure data in plain sight using probabilistic token selection.
 
