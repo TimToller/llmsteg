@@ -2,7 +2,10 @@
 
 ## An update
 
-After talking to one if the professers at JKU, I will probably research this topic further in form of the **Seminar in AI** course. Maybe I will even write my bachelor thesis on it, lets see. If so, I will update the README here.
+After talking to one if the professers at JKU, I will probably research this topic further in form of the **Seminar in AI** course. Maybe I will even write my bachelor thesis on it, lets see. 
+
+Seminar presentation can be found here:
+[Watermarks_for_Language_Models-Toller.pdf](https://github.com/user-attachments/files/20224960/Watermarks_for_Language_Models-Toller.pdf)
 
 ## Introduction
 
